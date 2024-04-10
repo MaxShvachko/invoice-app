@@ -4,11 +4,12 @@
     class="invoice-wrap flex flex-column"
     @click="checkClick"
   >
+    {{ invoiceTotal }}
     <form
       class="invoice-content"
       @submit.prevent="submitForm"
     >
-      <Loading v-show="loading" />
+      <SpinnerItem v-show="loading" />
       <h1 v-if="!editInvoice">
         New Invoice
       </h1>
@@ -130,7 +131,7 @@
       class="invoice-content"
       @submit.prevent="submitForm"
     >
-      <Loading v-show="loading" />
+      <SpinnerItem v-show="loading" />
       <h1 v-if="!editInvoice">
         New Invoice
       </h1>
@@ -270,7 +271,6 @@
             id="paymentTerms"
             v-model="paymentTerms"
             required
-            type="text"
           >
             <option value="30">
               Net 30 Days
@@ -395,11 +395,17 @@
 </template>
 
 <script>
+import { v4 as uuid } from 'uuid';
 import { mapMutations } from 'vuex';
 
+import SpinnerItem from './spinner-item.vue';
+import { addDataToDB } from "../firebase/firebaseInit";
 
 export default {
   name: 'InvoiceModal',
+  components: {
+    SpinnerItem
+  },
   data() {
     return {
       dateOptions: { year: "numeric", month: "short", day: "numeric" },
@@ -424,11 +430,99 @@ export default {
       invoicePending: null,
       invoiceDraft: null,
       invoiceItemList: [],
-      invoiceTotal: 0,
+      invoiceTotal: 0
     };
   },
+  watch: {
+    paymentTerms() {
+      const futureDate = new Date();
+      this.paymentDueDateUnix = futureDate.setDate(futureDate.getDate() + parseInt(this.paymentTerms));
+      this.paymentDueDate = this.prettifyDate(this.paymentDueDateUnix);
+    }
+  },
+  created() {
+    this.invoiceDateUnix = Date.now();
+    this.invoiceDate = this.prettifyDate(this.invoiceDateUnix)
+  },
   methods: {
-    ...mapMutations(['TOGGLE_INVOICE_MODAL'])
+    ...mapMutations(['TOGGLE_INVOICE_MODAL', 'TOGGLE_INVOICE_CONFIRMATION_MODAL']),
+    prettifyDate(date) {
+      return new Date(date).toLocaleDateString('en-us', this.dateOptions);
+    },
+    checkClick(e) {
+      if (e.target === this.$refs.invoiceWrap) {
+        this.TOGGLE_INVOICE_CONFIRMATION_MODAL();
+      }
+    },
+    addNewInvoiceItem() {
+      this.invoiceItemList.push({
+        id: uuid(),
+        itemName: '',
+        qty: '',
+        price: 0,
+        total: 0
+      });
+    },
+    calculateTotal() {
+      this.invoiceTotal = this.invoiceItemList.reduce((accum, item) => {
+        return accum + item.total
+      }, 0)
+    },
+    deleteInvoiceItem(id) {
+      this.invoiceItemList = this.invoiceItemList.filter((item) => item.id !== id);
+    },
+    publishInvoice() {
+      this.invoicePending = true;
+    },
+    saveDraft() {
+      this.invoiceDraft = true;
+    },
+    async uploadInvoice() {
+      if (!this.invoiceItemList.length) {
+        alert('Please ensure you filled out work items!');
+        return;
+      }
+      this.calculateTotal();
+
+      this.loading = true;
+
+      await addDataToDB({
+        path: 'invoices', 
+        data: {
+          invoiceId: uuid(6),
+          billerStreetAddress: this.billerStreetAddress,
+          billerCity: this.billerCity,
+          billerZipCode: this.billerZipCode,
+          billerCountry: this.billerCountry,
+          clientName: this.clientName,
+          clientEmail: this.clientEmail,
+          clientStreetAddress: this.clientStreetAddress,
+          clientCity: this.clientCity,
+          clientZipCode: this.clientZipCode,
+          clientCountry: this.clientCountry,
+          invoiceDate: this.invoiceDate,
+          invoiceDateUnix: this.invoiceDateUnix,
+          paymentTerms: this.paymentTerms,
+          paymentDueDate: this.paymentDueDate,
+          paymentDueDateUnix: this.paymentDueDateUnix,
+          productDescription: this.productDescription,
+          invoiceItemList: this.invoiceItemList,
+          invoiceTotal: this.invoiceTotal,
+          invoicePending: this.invoicePending,
+          invoiceDraft: this.invoiceDraft,
+          invoicePaid: null,
+        }
+      })
+
+      this.loading = false;
+      this.TOGGLE_INVOICE_MODAL();
+    },
+    submitForm() {
+      this.uploadInvoice();
+    },
+    editInvoice() {
+
+    }
   }
 }
 </script>

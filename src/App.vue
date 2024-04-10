@@ -3,8 +3,14 @@
     v-if="!isMobile"
     class="app flex flex-column"
   >
+    <SpinnerItem v-show="!isInvoicesLoaded" />
     <NavigationItem />
     <div class="app__content flex flex-column">
+      <ModalItem
+        v-show="isInvoiceConfirmationOpen"
+        @close-modal="TOGGLE_INVOICE_CONFIRMATION_MODAL"
+        @close-invoice="closeInvoice"
+      />
       <Transition name="invoice">
         <div v-if="isInvoiceModalOpen">
           <InvoiceModal />
@@ -23,32 +29,46 @@
 </template>
 
 <script>
-  import { mapState } from 'vuex'; 
+  import { mapState, mapMutations, mapActions } from 'vuex'; 
 
   import NavigationItem from './components/navigation-item.vue';
   import InvoiceModal from './components/invoice-modal.vue';
+  import ModalItem from './components/modal-item.vue';
+  import SpinnerItem from './components/spinner-item.vue';
 
   export default {
     components: {
       NavigationItem,
-      InvoiceModal
+      InvoiceModal,
+      ModalItem,
+      SpinnerItem
     },
     data() {
+
       return {
         isMobile: false
       }
     },
     computed: {
-      ...mapState(['isInvoiceModalOpen'])
+      ...mapState([
+        'isInvoiceModalOpen',
+        'isInvoiceConfirmationOpen',
+        'editInvoice',
+        'isInvoicesLoaded'
+    ])
     },
     created() {
       this.checkScreen()
       window.addEventListener('resize', this.checkScreen);
+
+      this.GET_INVOICES();
     },
     beforeUnmount() {
       window.removeEventListener('resize', this.checkScreen);
-    },  
+    },
     methods: {
+      ...mapActions(['GET_INVOICES']),
+      ...mapMutations(['TOGGLE_INVOICE_CONFIRMATION_MODAL', 'TOGGLE_INVOICE_MODAL']),
       checkScreen() {
         const screenWidth = window.innerWidth;
 
@@ -57,6 +77,10 @@
         } else {
           this.isMobile = false;
         }
+      },
+      closeInvoice() {
+        this.TOGGLE_INVOICE_CONFIRMATION_MODAL();
+        this.TOGGLE_INVOICE_MODAL();
       }
     }
   }
@@ -129,10 +153,18 @@ button,
 
 .red {
   background-color: #ec5757;
+
+  &:hover {
+    background-color: #e43232;
+  }
 }
 
 .purple {
   background-color: #7c5dfa;
+
+  &:hover {
+    background-color: #5f39f7;
+  }
 }
 
 .green {
@@ -209,5 +241,4 @@ button,
   color: #dfe3fa;
   background-color: rgba(223, 227, 250, 0.1);
 }
-</style>import { mapState } from 'vuex';
-
+</style>
