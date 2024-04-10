@@ -50,19 +50,44 @@
         </button>
       </div>
     </div>
+    <!-- Invoices -->
+    <div v-if="invoiceData.length > 0">
+      <InvoiceItem
+        v-for="(invoice, index) in invoiceData"
+        :key="index"
+        :invoice="invoice"
+      />
+    </div>
+    <div
+      v-else
+      class="empty flex flex-column"
+    >
+      <img
+        src="/assets/illustration-empty.svg"
+        alt=""
+      >
+      <h3>There is nothing here</h3>
+      <p>Create a new invoice by clicking the New Invoice button and get started</p>
+    </div>
   </div>
 </template>
 
 <script>
-import { mapMutations } from 'vuex';
+import { mapMutations, mapState } from 'vuex';
+import InvoiceItem from '../components/invoice-item.vue';
 
 export default {
   name: "VueHome",
-  components: {},
+  components: {
+    InvoiceItem
+  },
   data() {
     return {
       isMenuOpen: false
     }
+  },
+  computed: {
+    ...mapState(['invoiceData'])
   },
   methods: {
     ...mapMutations(['TOGGLE_INVOICE_MODAL'])
