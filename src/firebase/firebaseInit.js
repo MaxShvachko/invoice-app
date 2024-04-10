@@ -1,19 +1,16 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDoc, query, getDocs } from "firebase/firestore";
+import { getFirestore, collection, addDoc, query, getDocs } from "firebase/firestore";
 
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBDO9KfCUkhEK2YJ2V8zP1F7ackooI8RDs",
-  authDomain: "invoice-app-b89ec.firebaseapp.com",
-  projectId: "invoice-app-b89ec",
-  storageBucket: "invoice-app-b89ec.appspot.com",
-  messagingSenderId: "44781000432",
-  appId: "1:44781000432:web:9f48a95be3c316064d9435"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.APP_ID,
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
@@ -40,8 +37,6 @@ export const addDataToDB = async ({ path, data }) => {
  * 
  * @param {Object} options - The options object.
  * @param {string} options.path - The path to the Firestore collection.
- * @param {Object} options.data - The data to be added to the Firestore collection.
- * @returns {Promise<DocumentReference>} A promise that resolves with the DocumentReference of the added document.
  */
 export const getMultipleData = async ({ path }) => {
   try {

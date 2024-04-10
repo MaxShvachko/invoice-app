@@ -692,5 +692,4 @@ export default {
     .input {
       margin-bottom: 24px;
     }
-</style>import { collection } from '@firebase/firestore';import { collection } from '@firebase/firestore';
-
+</style>
