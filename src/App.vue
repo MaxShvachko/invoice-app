@@ -241,6 +241,4 @@ button,
   color: #dfe3fa;
   background-color: rgba(223, 227, 250, 0.1);
 }
-</style>import { mapState } from 'vuex';
-import { mapMutations } from 'vuex/dist/vuex.cjs.js';
-
+</style>
