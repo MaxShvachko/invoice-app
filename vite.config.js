@@ -3,7 +3,8 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/invoice-app/',
+  // eslint-disable-next-line no-undef
+  base: process.env.BASE_URL,
   plugins: [vue()],
   build: {
     rollupOptions: {

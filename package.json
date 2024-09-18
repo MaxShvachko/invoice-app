@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "BASE_URL=/ vite",
+    "build": "BASE_URL=/invoice-app/ vite build",
     "preview": "vite preview",
     "lint": "eslint --ext .js,.vue src"
   },
