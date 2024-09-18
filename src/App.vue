@@ -53,7 +53,7 @@
       ...mapState([
         'isInvoiceModalOpen',
         'isInvoiceConfirmationOpen',
-        'editInvoice',
+        'isEditInvoice',
         'isInvoicesLoaded'
     ])
     },
@@ -68,7 +68,11 @@
     },
     methods: {
       ...mapActions(['GET_INVOICES']),
-      ...mapMutations(['TOGGLE_INVOICE_CONFIRMATION_MODAL', 'TOGGLE_INVOICE_MODAL']),
+      ...mapMutations([
+        'TOGGLE_INVOICE_CONFIRMATION_MODAL',
+        'TOGGLE_INVOICE_MODAL',
+        'TOGGLE_EDIT_INVOICE'
+      ]),
       checkScreen() {
         const screenWidth = window.innerWidth;
 
@@ -79,6 +83,9 @@
         }
       },
       closeInvoice() {
+        if (this.isEditInvoice) {
+          this.TOGGLE_EDIT_INVOICE();
+        }
         this.TOGGLE_INVOICE_CONFIRMATION_MODAL();
         this.TOGGLE_INVOICE_MODAL();
       }
@@ -204,6 +211,12 @@ button,
 // Status Button Styling
 
 .status-button {
+  font-size: 12px;
+  margin-right: 30px;
+  align-items: center;
+  padding: 8px 30px;
+  border-radius: 10px;
+
   &::before {
     content: "";
     width: 10px;
@@ -211,34 +224,31 @@ button,
     border-radius: 50%;
     margin-right: 8px;
   }
-  font-size: 12px;
-  margin-right: 30px;
-  align-items: center;
-  padding: 8px 30px;
-  border-radius: 10px;
 }
 
 .paid {
+  color: #33d69f;
+  background-color: rgba(51, 214, 160, 0.1);
   &::before {
     background-color: #33d69f;
   }
-  color: #33d69f;
-  background-color: rgba(51, 214, 160, 0.1);
 }
 
 .pending {
+  color: #ff8f00;
+  background-color: rgba(255, 145, 0, 0.1);
+
   &::before {
     background-color: #ff8f00;
   }
-  color: #ff8f00;
-  background-color: rgba(255, 145, 0, 0.1);
 }
 
 .draft {
+  color: #dfe3fa;
+  background-color: rgba(223, 227, 250, 0.1);
+
   &::before {
     background-color: #dfe3fa;
   }
-  color: #dfe3fa;
-  background-color: rgba(223, 227, 250, 0.1);
 }
 </style>

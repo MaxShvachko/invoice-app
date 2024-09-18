@@ -10,7 +10,7 @@
       @submit.prevent="submitForm"
     >
       <SpinnerItem v-show="loading" />
-      <h1 v-if="!editInvoice">
+      <h1 v-if="!isEditInvoice">
         New Invoice
       </h1>
       <h1 v-else>
@@ -132,7 +132,7 @@
       @submit.prevent="submitForm"
     >
       <SpinnerItem v-show="loading" />
-      <h1 v-if="!editInvoice">
+      <h1 v-if="!isEditInvoice">
         New Invoice
       </h1>
       <h1 v-else>
@@ -292,52 +292,56 @@
         <div class="work-items">
           <h3>Item List</h3>
           <table class="item-list">
-            <tr class="table-heading flex">
-              <th class="item-name">
-                Item Name
-              </th>
-              <th class="qty">
-                Qty
-              </th>
-              <th class="price">
-                Price
-              </th>
-              <th class="total">
-                Toal
-              </th>
-            </tr>
-            <tr
-              v-for="(item, index) in invoiceItemList"
-              :key="index"
-              class="table-items flex"
-            >
-              <td class="item-name">
-                <input
-                  v-model="item.itemName"
-                  type="text"
-                >
-              </td>
-              <td class="qty">
-                <input
-                  v-model="item.qty"
-                  type="text"
-                >
-              </td>
-              <td class="price">
-                <input
-                  v-model="item.price"
-                  type="text"
-                >
-              </td>
-              <td class="total flex">
-                ${{ (item.total = item.qty * item.price) }}
-              </td>
-              <img
-                src="/assets/icon-delete.svg"
-                alt=""
-                @click="deleteInvoiceItem(item.id)"
+            <tbody>
+              <tr class="table-heading flex">
+                <th class="item-name">
+                  Item Name
+                </th>
+                <th class="qty">
+                  Qty
+                </th>
+                <th class="price">
+                  Price
+                </th>
+                <th class="total">
+                  Toal
+                </th>
+              </tr>
+              <tr
+                v-for="(item, index) in invoiceItemList"
+                :key="index"
+                class="table-items flex"
               >
-            </tr>
+                <td class="item-name">
+                  <input
+                    v-model="item.itemName"
+                    type="text"
+                  >
+                </td>
+                <td class="qty">
+                  <input
+                    v-model="item.qty"
+                    type="text"
+                  >
+                </td>
+                <td class="price">
+                  <input
+                    v-model="item.price"
+                    type="text"
+                  >
+                </td>
+                <td class="total flex">
+                  ${{ (item.total = item.qty * item.price) }}
+                </td>
+                <td>
+                  <img
+                    src="/assets/icon-delete.svg"
+                    alt=""
+                    @click="deleteInvoiceItem(item.id)"
+                  >
+                </td>
+              </tr>
+            </tbody>
           </table>
 
           <div
@@ -359,14 +363,14 @@
           <button
             type="button"
             class="red"
-            @click="TOGGLE_INVOICE_MODAL"
+            @click="closeInvoiceModal"
           >
             Cancel
           </button>
         </div>
         <div class="right flex">
           <button
-            v-if="!editInvoice"
+            v-if="!isEditInvoice"
             type="submit"
             class="dark-purple"
             @click="saveDraft"
@@ -374,7 +378,7 @@
             Save Draft
           </button>
           <button
-            v-if="!editInvoice"
+            v-if="!isEditInvoice"
             type="submit"
             class="purple"
             @click="publishInvoice"
@@ -382,7 +386,7 @@
             Create Invoice
           </button>
           <button
-            v-if="editInvoice"
+            v-if="isEditInvoice"
             type="sumbit"
             class="purple"
           >
@@ -396,10 +400,11 @@
 
 <script>
 import { v4 as uuid } from 'uuid';
-import { mapMutations } from 'vuex';
+import { mapMutations, mapState, mapActions } from 'vuex';
 
 import SpinnerItem from './spinner-item.vue';
-import { addDataToDB } from "../firebase/firebaseInit";
+import { INVOICE_STATUSES, DB_PATHS }from '../constants/common';
+import { addDataToDB, updateData } from "../firebase/firebaseInit";
 
 export default {
   name: 'InvoiceModal',
@@ -408,9 +413,11 @@ export default {
   },
   data() {
     return {
+      INVOICE_STATUSES,
       dateOptions: { year: "numeric", month: "short", day: "numeric" },
       docId: null,
       loading: null,
+      invoiceId: null,
       billerStreetAddress: null,
       billerCity: null,
       billerZipCode: null,
@@ -427,11 +434,12 @@ export default {
       paymentDueDateUnix: null,
       paymentDueDate: null,
       productDescription: null,
-      invoicePending: null,
-      invoiceDraft: null,
       invoiceItemList: [],
       invoiceTotal: 0
     };
+  },
+  computed: {
+    ...mapState(['isEditInvoice', 'currentInvoiceArray'])
   },
   watch: {
     paymentTerms() {
@@ -443,9 +451,40 @@ export default {
   created() {
     this.invoiceDateUnix = Date.now();
     this.invoiceDate = this.prettifyDate(this.invoiceDateUnix)
-  },
+
+    if (this.isEditInvoice) {
+      const currentInvoice = this.currentInvoiceArray[0];
+      this.docId = currentInvoice.docId;
+      this.invoiceId = currentInvoice.invoiceId;
+      this.billerStreetAddress = currentInvoice.billerStreetAddress;
+      this.billerCity = currentInvoice.billerCity;
+      this.billerZipCode = currentInvoice.billerZipCode;
+      this.billerCountry = currentInvoice.billerCountry;
+      this.clientName = currentInvoice.clientName;
+      this.clientEmail = currentInvoice.clientEmail;
+      this.clientStreetAddress = currentInvoice.clientStreetAddress;
+      this.clientCity = currentInvoice.clientCity;
+      this.invoiceId = currentInvoice.invoiceId;
+      this.clientZipCode = currentInvoice.clientZipCode;
+      this.clientCountry = currentInvoice.clientCountry;
+      this.invoiceDateUnix = currentInvoice.invoiceDateUnix;
+      this.invoiceDate = currentInvoice.invoiceDate;
+      this.paymentTerms = currentInvoice.paymentTerms;
+      this.paymentDueDateUnix = currentInvoice.paymentDueDateUnix;
+      this.paymentDueDate = currentInvoice.paymentDueDate;
+      this.productDescription = currentInvoice.productDescription;
+      this.status = currentInvoice.status;
+      this.invoiceItemList = currentInvoice.invoiceItemList;
+      this.invoiceTotal = currentInvoice.invoiceTotal;
+    }
+  },  
   methods: {
-    ...mapMutations(['TOGGLE_INVOICE_MODAL', 'TOGGLE_INVOICE_CONFIRMATION_MODAL']),
+    ...mapMutations([
+      'TOGGLE_INVOICE_MODAL',
+      'TOGGLE_EDIT_INVOICE',
+      'TOGGLE_INVOICE_CONFIRMATION_MODAL',
+    ]),
+    ...mapActions(['UPDATE_INVOICE', 'ADD_NEW_INVOICE']),
     prettifyDate(date) {
       return new Date(date).toLocaleDateString('en-us', this.dateOptions);
     },
@@ -472,10 +511,10 @@ export default {
       this.invoiceItemList = this.invoiceItemList.filter((item) => item.id !== id);
     },
     publishInvoice() {
-      this.invoicePending = true;
+      this.status = INVOICE_STATUSES.PENDING;
     },
     saveDraft() {
-      this.invoiceDraft = true;
+      this.status = INVOICE_STATUSES.DRAFT;
     },
     async uploadInvoice() {
       if (!this.invoiceItemList.length) {
@@ -487,7 +526,7 @@ export default {
       this.loading = true;
 
       await addDataToDB({
-        path: 'invoices', 
+        path: DB_PATHS.INVOICES, 
         data: {
           invoiceId: uuid(6),
           billerStreetAddress: this.billerStreetAddress,
@@ -508,20 +547,68 @@ export default {
           productDescription: this.productDescription,
           invoiceItemList: this.invoiceItemList,
           invoiceTotal: this.invoiceTotal,
-          invoicePending: this.invoicePending,
-          invoiceDraft: this.invoiceDraft,
-          invoicePaid: null,
+          status: this.status,
         }
       })
 
       this.loading = false;
+
+      this.ADD_NEW_INVOICE();
+    },
+    async updateInvoice() {
+      if (this.invoiceItemList.length <= 0) {
+        alert("Please ensure you filled out work items!");
+        return;
+      }
+
+      this.loading = true;
+
+      this.calculateTotal();
+
+      await updateData({
+        path: DB_PATHS.INVOICES,
+        docId: this.docId,
+        data: {
+          billerStreetAddress: this.billerStreetAddress,
+          billerCity: this.billerCity,
+          billerZipCode: this.billerZipCode,
+          billerCountry: this.billerCountry,
+          clientName: this.clientName,
+          clientEmail: this.clientEmail,
+          clientStreetAddress: this.clientStreetAddress,
+          clientCity: this.clientCity,
+          invoiceId: this.invoiceId,
+          clientZipCode: this.clientZipCode,
+          clientCountry: this.clientCountry,
+          paymentTerms: this.paymentTerms,
+          paymentDueDate: this.paymentDueDate,
+          paymentDueDateUnix: this.paymentDueDateUnix,
+          productDescription: this.productDescription,
+          invoiceItemList: this.invoiceItemList,
+          invoiceTotal: this.invoiceTotal,
+        }
+      });
+
+      this.loading = false;
+
+      const data = {
+        routeId: this.$route.params.invoiceId,
+      };
+
+      this.UPDATE_INVOICE(data);
+    },
+    closeInvoiceModal() {
+      if (this.isEditInvoice) {
+        this.TOGGLE_EDIT_INVOICE();
+      }
       this.TOGGLE_INVOICE_MODAL();
     },
     submitForm() {
-      this.uploadInvoice();
-    },
-    editInvoice() {
-
+      if (this.isEditInvoice){
+        this.updateInvoice();
+      } else {
+        this.uploadInvoice();
+      }
     }
   }
 }
@@ -658,6 +745,11 @@ export default {
                 right: 0;
                 width: 12px;
                 height: 16px;
+                cursor: pointer;
+                transition: all ease-in 0.1s;
+                &:hover {
+                  scale: 1.2;
+                }
               }
             }
           }
