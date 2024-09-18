@@ -12,11 +12,15 @@
       <span class="price">${{ invoice.invoiceTotal }}</span>
       <div
         class="status-button flex"
-        :class="{ paid: invoice.invoicePaid, draft: invoice.invoiceDraft, pending: invoice.invoicePending }"
+        :class="{ 
+          paid: invoice.status === INVOICE_STATUSES.PAID,
+          draft: invoice.status === INVOICE_STATUSES.DRAFT,
+          pending: invoice.status === INVOICE_STATUSES.PENDING
+        }"
       >
-        <span v-if="invoice.invoicePaid">Paid</span>
-        <span v-if="invoice.invoiceDraft">Draft</span>
-        <span v-if="invoice.invoicePending">Pending</span>
+        <span v-if="invoice.status === INVOICE_STATUSES.PAID">Paid</span>
+        <span v-if="invoice.status === INVOICE_STATUSES.DRAFT">Draft</span>
+        <span v-if="invoice.status === INVOICE_STATUSES.PENDING">Pending</span>
       </div>
       <div class="icon">
         <img
@@ -29,6 +33,8 @@
 </template>
 
 <script>
+import { INVOICE_STATUSES } from '../constants/common';
+
 export default {
   name: 'InvoiceItem',
   props: {
@@ -37,6 +43,11 @@ export default {
       default() {
         return {};
       }
+    }
+  },
+  data() {
+    return {
+      INVOICE_STATUSES
     }
   }
 }

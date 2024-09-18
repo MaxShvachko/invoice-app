@@ -4,16 +4,16 @@
     <div class="header flex">
       <div class="left flex flex-column">
         <h1>Invoices</h1>
-        <!-- <span>There are {{ invoiceData?.length }} total invoices</span> -->
-        <span>There are 4 total invoices</span>
+        <span>There are {{ filteredInvoicesData?.length }} total invoices</span>
       </div>
       <div class="right flex">
         <button
           class="filter flex"
           @click="isMenuOpen = !isMenuOpen"
         >
-          <!-- <span>Filter by status <span v-if="filteredInvoice">: </span></span> -->
-          <span>Filter by status <span>: </span></span>
+          <span>Filter by status 
+            <span v-if="status">: <span style="text-transform: capitalize;">{{ status }}</span></span>
+          </span>
           <img
             src="/assets/icon-arrow-down.svg"
             alt=""
@@ -22,16 +22,16 @@
             v-show="isMenuOpen"
             class="filter-menu"
           >
-            <li>
+            <li @click="filterInvoicesByStatus(INVOICE_STATUSES.DRAFT)">
               Draft
             </li>
-            <li>
+            <li @click="filterInvoicesByStatus(INVOICE_STATUSES.PENDING)">
               Pending
             </li>
-            <li>
+            <li @click="filterInvoicesByStatus(INVOICE_STATUSES.PAID)">
               Paid
             </li>
-            <li>
+            <li @click="filterInvoicesByStatus(null)">
               Clear Filter
             </li>
           </ul>
@@ -51,9 +51,9 @@
       </div>
     </div>
     <!-- Invoices -->
-    <div v-if="invoiceData.length > 0">
+    <div v-if="filteredInvoicesData.length > 0">
       <InvoiceItem
-        v-for="(invoice, index) in invoiceData"
+        v-for="(invoice, index) in filteredInvoicesData"
         :key="index"
         :invoice="invoice"
       />
@@ -74,6 +74,7 @@
 
 <script>
 import { mapMutations, mapState } from 'vuex';
+import { INVOICE_STATUSES } from '../constants/common';
 import InvoiceItem from '../components/invoice-item.vue';
 
 export default {
@@ -83,14 +84,37 @@ export default {
   },
   data() {
     return {
-      isMenuOpen: false
+      isMenuOpen: false,
+      INVOICE_STATUSES,
+      status: null,
     }
   },
   computed: {
-    ...mapState(['invoiceData'])
+    ...mapState(['invoiceData']),
+    filteredInvoicesData() {
+      if (this.status) {
+        return this.invoiceData?.filter((invoice) => {
+          return invoice.status === this.status;
+      });
+    } 
+      return this.invoiceData;
+    }
+  },
+  created() {
+    this.status = this.$route.query.status;
+    this.$watch(
+      () => this.$route.query.status,
+      (newStatus) => {
+        this.status = newStatus;
+      }
+    )
   },
   methods: {
-    ...mapMutations(['TOGGLE_INVOICE_MODAL'])
+    ...mapMutations(['TOGGLE_INVOICE_MODAL']),
+    filterInvoicesByStatus(status) {
+      this.status = status;
+      this.$router.push({ query: status ? { status } : {} })
+    }
   },
 };
 </script>
@@ -206,5 +230,4 @@ export default {
     }
   }
 }
-</style>import { mapState } from 'vuex';
-
+</style>

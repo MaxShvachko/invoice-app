@@ -1,5 +1,14 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, query, getDocs } from "firebase/firestore";
+import {
+  doc,
+  query, 
+  addDoc,
+  setDoc,
+  getDocs,
+  deleteDoc,
+  collection, 
+  getFirestore, 
+ } from "firebase/firestore";
 
 
 const firebaseConfig = {
@@ -27,10 +36,41 @@ export const addDataToDB = async ({ path, data }) => {
   try {
     return await addDoc(collection(db, path), data);
   } catch (error) {
-    console.error("Error adding document: ", error);
     return error;
   }
 }
+
+/**
+ * Delete document from the Firestore database.
+ * 
+ * @param {Object} options - The options object.
+ * @param {string} options.path - The path to the Firestore collection.
+ * @param {string} options.docId - The docId of the Firestore document.
+ */
+export const deleteDataFromDB = async ({ path, docId }) => {
+  try {
+    return await deleteDoc(doc(db, path, docId));
+  } 
+  catch (error) {
+    return error;
+  }
+};
+
+/**
+ * Update data in the Firestore database.
+ * 
+ * @param {Object} options - The options object.
+ * @param {string} options.path - The path to the Firestore collection.
+ * @param {string} options.docId - The docId of the Firestore document.
+ * @param {Object} options.data - The data for update.
+ */
+export const updateData = async ({ path, docId, data }) => {
+  try {
+    return await setDoc(doc(db, path, docId), data, { merge: true });   
+  } catch (error) {
+    return error;
+  }
+};
 
 /**
  * Adds data to the Firestore database.
@@ -47,7 +87,10 @@ export const getMultipleData = async ({ path }) => {
     const result = [];
 
      querySnapshot.forEach((doc) => {
-      result.push(doc.data());
+      result.push({
+        docId: doc.id,
+        ...doc.data()
+      });
     })
 
     return result;
