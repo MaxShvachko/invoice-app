@@ -609,9 +609,6 @@ export default {
       } else {
         this.uploadInvoice();
       }
-    },
-    setEdit() {
-
     }
   }
 }
